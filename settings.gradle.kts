@@ -1,4 +1,4 @@
 
-rootProject.name = "gitversion-kotlin"
+rootProject.name = "gitversion"
 
 
