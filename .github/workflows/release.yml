@@ -1,0 +1,46 @@
+name: release
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Java JDK
+        uses: actions/setup-java@v2.1.0
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+      - name: Install libgit2
+        run: sudo apt install -y libgit2-dev
+      - name: Calculate version
+        run: echo VERSION=$(curl https://github.com/solugo/gitversion-kotlin/releases/latest/download/gitversion -Lso gitversion && chmod a+x gitversion && ./gitversion) >> $GITHUB_ENV
+      - name: Build
+        run: ./gradlew clean linkReleaseExecutable
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.VERSION }}
+          release_name: v${{ env.VERSION }}
+          draft: false
+          prerelease: false
+      - name: Upload Release Asset
+        id: upload_release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: ./build/bin/native/releaseExecutable/gitversion.kexe
+          asset_content_type: application/octet-stream
+          asset_name: gitversion
