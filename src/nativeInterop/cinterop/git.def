@@ -1,6 +1,7 @@
 headers = git2.h
 headerFilter = **/*
-
+staticLibraries = libgit2.a
+libraryPaths=/lib/x86_64-linux-gnu
 compilerOpts.linux = -I/usr/include -I/usr/include/x86_64-linux-gnu
-linkerOpts.osx = -L/opt/local/lib -L/usr/local/opt/curl/lib -lcurl
-linkerOpts.linux = -L/usr/lib/x86_64-linux-gnu -lgit2
+linkerOpts.osx = -L/opt/local/lib -L/usr/local/opt/libgit/lib -llibgit
+linkerOpts.linux = -L/lib/x86_64-linux-gnu -lmbedtls -lz -lmbedx509 -lmbedcrypto -lhttp_parser -lgssapi_krb5 -lssh2
