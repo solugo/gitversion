@@ -42,6 +42,7 @@ kotlin {
         val nativeMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.4")
+                implementation("me.archinamon:file-io:1.3.5")
             }
         }
         val nativeTest by getting

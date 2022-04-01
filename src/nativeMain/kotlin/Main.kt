@@ -1,7 +1,11 @@
+import kotlinx.cinterop.toKStringFromUtf8
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
 import kotlinx.cli.optional
+import me.archinamon.fileio.File
+import me.archinamon.fileio.appendText
+import platform.posix.getenv
 
 fun main(args: Array<String>) {
 
@@ -13,6 +17,7 @@ fun main(args: Array<String>) {
     val patchPattern by parser.option(type = ArgType.String, fullName = "patch_pattern").default(".+")
     val verbose by parser.option(type = ArgType.Boolean, shortName = "v", fullName = "verbose").default(false)
     val path by parser.argument(type = ArgType.String, fullName = "path").optional().default(".")
+    val pipeline by parser.argument(type = ArgType.Boolean, fullName = "pipeline").optional().default(true)
 
     parser.parse(args)
 
@@ -90,8 +95,18 @@ fun main(args: Array<String>) {
         if (verbose) println("$version because of ${change.reason}")
     }
 
+    if (pipeline) {
+        getenv("GITHUB_ENV")?.toKStringFromUtf8()?.also {
+            writeLinesToFile(it, "VERSION=$version", "GITHUB_RUN_NUMBER=$version")
+        }
+    }
+
     println(version)
 
+}
+
+private fun writeLinesToFile(file: String, vararg lines: String) {
+    File(file).appendText(lines.joinToString(separator = "\n", postfix = "\n"))
 }
 
 data class VersionChange(val reason: Any, val modification: (Version.() -> Unit)?)
