@@ -97,7 +97,7 @@ fun main(args: Array<String>) {
 
     if (pipeline) {
         getenv("GITHUB_ENV")?.toKStringFromUtf8()?.also {
-            writeLinesToFile(it, "VERSION=$version", "GITHUB_RUN_NUMBER=$version")
+            writeLinesToFile(it, "VERSION=$version")
         }
     }
 
