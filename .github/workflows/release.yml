@@ -21,7 +21,7 @@ jobs:
           distribution: 'adopt'
           java-version: '11'
       - name: Calculate version
-        run: curl -Ls https://solugo.github.io/gitversion/run.sh | GITVERSION=0.0.6 bash
+        run: curl -Ls https://solugo.github.io/gitversion/run.sh | GITVERSION=v0.0.7 bash
       - name: Build
         run: ./gradlew clean linkReleaseExecutable
       - name: Create Release

@@ -1,12 +1,10 @@
+![](https://img.shields.io/github/workflow/status/solugo/gitversion/release?style=for-the-badge)
+![](https://img.shields.io/github/v/release/solugo/gitversion?style=for-the-badge) 
+
 # GitCommit
 
 A native console application to calculate a version based on git commits and tags
 
-## Bash download and execution
+## Documentation
 
-```bash
-FILE="$(tempfile)" && curl https://github.com/solugo/gitversion-kotlin/releases/latest/download/gitversion -Lso $FILE && chmod a+x $FILE && $FILE
-```
-
-## Parameters
-Run `gitversion --help` to get available parameters
+Please visit the project's [website](https://solugo.github.io/gitversion/). 
