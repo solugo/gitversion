@@ -1,1 +1,4 @@
 theme: jekyll-theme-cayman
+title: Git Version
+description: A native console application to calculate a version based on git commits and tags.
+show_downloads: true
