@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType.RELEASE
-
 plugins {
     kotlin("multiplatform") version "1.6.10"
 }
@@ -32,6 +30,11 @@ kotlin {
                 entryPoint = "main"
                 baseName = "gitversion"
                 optimized = true
+                linkerOpts("--as-needed", "--defsym=isnan=isnan")
+                freeCompilerArgs = freeCompilerArgs + listOf("-Xoverride-konan-properties=linkerGccFlags=-lgcc -lgcc_eh -lc")
+                linkerOpts.add("-s")
+                linkerOpts.add("-static")
+                linkerOpts.add("./libs/libgit2.a")
             }
         }
     }
