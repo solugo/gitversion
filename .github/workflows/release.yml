@@ -10,7 +10,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config:
+          - os: ubuntu-20.04
+            system: linux
+            arch: x64
     steps:
       - uses: actions/checkout@v2
         with:
@@ -24,23 +30,18 @@ jobs:
         run: curl -Ls https://solugo.github.io/gitversion/run.sh | GITVERSION=v0.0.7 bash
       - name: Build
         run: ./gradlew clean linkReleaseExecutable
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Prepare Release for Linux
+        if: matrix.system == 'linux'
+        run: |
+          mkdir "${GITHUB_WORKSPACE}/release"
+          cp "${GITHUB_WORKSPACE}/build/bin/native/releaseExecutable/gitversion.kexe" "${GITHUB_WORKSPACE}/release/gitversion-${{ matrix.config.system }}-${{ matrix.config.arch }}"
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ env.VERSION }}
-          release_name: v${{ env.VERSION }}
-          draft: false
-          prerelease: false
-      - name: Upload Release Asset
-        id: upload_release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
+          files: |
+            "${GITHUB_WORKSPACE}/release/*"
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./build/bin/native/releaseExecutable/gitversion.kexe
           asset_content_type: application/octet-stream
-          asset_name: gitversion
+          asset_name: gitversion-${{ matrix.config.system }}-${{ matrix.config.arch }}
