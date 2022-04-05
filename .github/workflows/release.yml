@@ -10,13 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.config.os }}
-    strategy:
-      matrix:
-        config:
-          - os: ubuntu-20.04
-            system: linux
-            arch: x64
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -30,14 +24,13 @@ jobs:
         run: curl -Ls https://solugo.github.io/gitversion/run.sh | GITVERSION=v0.0.7 bash
       - name: Build
         run: ./gradlew clean linkReleaseExecutable
-      - name: Prepare Release for Linux
-        if: ${{ matrix.config.system == 'linux' }}
+      - name: Prepare Release
         run: |
           mkdir "release"
-          cp "build/bin/native/releaseExecutable/gitversion.kexe" "release/gitversion-${{ matrix.config.system }}-${{ matrix.config.arch }}"
+          cp "build/bin/linuxX64/releaseExecutable/gitversion.kexe" "release/gitversion-linux-x64"
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ env.VERSION }}
           files: |
-            "release/*"
+            release/gitversion-linux-x64
