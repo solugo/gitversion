@@ -31,5 +31,4 @@ fi
 BINARY=$(mktemp)
 VERSION=${GITVERSION:+download/$GITVERSION}
 URL=https://github.com/solugo/gitversion/releases/${VERSION:-latest/download}/$ARTIFACT
-echo $URL
 curl $URL -Lso $BINARY && chmod a+x $BINARY && $BINARY
