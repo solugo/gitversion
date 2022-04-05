@@ -6,7 +6,9 @@ ARCH="$(uname -i)"
 if [[ "$PLATFORM" == "Linux" ]] || [[ "$PLATFORM" == "msys" ]] || [[ "$PLATFORM" == "cygwin" ]]; then
   PLATFORM="linux"
 elif [[ "$OSTYPE" == "win32" ]] || [[ "$OSTYPE" == "Microsoft Windows" ]] || [[ "$OSTYPE" == "Windows" ]] || [[ "$OSTYPE" == "Microsoft" ]]; then
-  platform="windows"
+  echo "Platform $PLATFORM is not supported"
+  exit 1
+  #PLATFORM="windows"
 else
   echo "Platform $PLATFORM is not supported"
   exit 1
