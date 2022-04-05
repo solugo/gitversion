@@ -31,7 +31,7 @@ jobs:
       - name: Build
         run: ./gradlew clean linkReleaseExecutable
       - name: Prepare Release for Linux
-        if: matrix.system == 'linux'
+        if: ${{ matrix.config.system == 'linux' }}
         run: |
           mkdir "${GITHUB_WORKSPACE}/release"
           cp "${GITHUB_WORKSPACE}/build/bin/native/releaseExecutable/gitversion.kexe" "${GITHUB_WORKSPACE}/release/gitversion-${{ matrix.config.system }}-${{ matrix.config.arch }}"
@@ -41,7 +41,3 @@ jobs:
           tag_name: v${{ env.VERSION }}
           files: |
             "${GITHUB_WORKSPACE}/release/*"
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/bin/native/releaseExecutable/gitversion.kexe
-          asset_content_type: application/octet-stream
-          asset_name: gitversion-${{ matrix.config.system }}-${{ matrix.config.arch }}
