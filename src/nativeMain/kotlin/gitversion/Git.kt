@@ -1,3 +1,5 @@
+package gitversion
+
 import cnames.structs.git_object
 import cnames.structs.git_repository
 import cnames.structs.git_revwalk
@@ -10,6 +12,24 @@ class Git(path: String) {
     init {
         git_libgit2_init().handleGitError()
         git_repository_open(repositoryReference.ptr, path).handleGitError()
+    }
+
+    companion object {
+        fun git_error_code.handleGitError() {
+            this.also { value ->
+                if (value < 0) {
+                    git_error_last()?.also {
+                        throw RuntimeException(it.pointed.run { "$value/$klass: ${message?.toKString()}" })
+                    }
+                }
+            }
+        }
+
+        fun git_oid.toKStringFromUtf8() = memScoped {
+            allocArray<ByteVar>(41).also { string ->
+                git_oid_tostr(string, 41, ptr)
+            }.toKStringFromUtf8()
+        }
     }
 
     fun consumeTags(callback: (Tag) -> Boolean) {
@@ -49,8 +69,6 @@ class Git(path: String) {
     }
 
     fun consumeCommits(callback: (Commit) -> Boolean) {
-        data class Parameters(val repository: CPointer<git_repository>, val callback: (Commit) -> Boolean)
-
         val repository = checkNotNull(repositoryReference.pointed)
 
         memScoped {

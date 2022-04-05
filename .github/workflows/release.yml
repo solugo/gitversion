@@ -23,14 +23,16 @@ jobs:
       - name: Calculate version
         run: curl -Ls https://solugo.github.io/gitversion/run.sh | GITVERSION=v0.0.7 bash
       - name: Build
-        run: ./gradlew clean linkReleaseExecutable
+        run: ./gradlew clean linkReleaseExecutableLinuxX64 linkReleaseExecutableWindowsX64
       - name: Prepare Release
         run: |
           mkdir "release"
           cp "build/bin/linuxX64/releaseExecutable/gitversion.kexe" "release/gitversion-linux-x64"
+          cp "build/bin/windowsX64/releaseExecutable/gitversion.exe" "release/gitversion-windows-x64"
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ env.VERSION }}
           files: |
             release/gitversion-linux-x64
+            release/gitversion-windows-x64

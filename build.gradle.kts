@@ -22,11 +22,27 @@ kotlin {
                 entryPoint = "main"
                 baseName = "gitversion"
                 optimized = true
-                linkerOpts("--as-needed", "--defsym=isnan=isnan")
                 freeCompilerArgs = freeCompilerArgs + listOf("-Xoverride-konan-properties=linkerGccFlags=-lgcc -lgcc_eh -lc")
-                linkerOpts.add("-s")
-                linkerOpts.add("-static")
-                linkerOpts.add("./libs/libgit2.a")
+
+                linkerOpts("--as-needed", "--defsym=isnan=isnan", "-s", "-static", "./libs/libgit2.a")
+            }
+        }
+    }
+
+    val windowsX64 = mingwX64("windowsX64") {
+        compilations.getByName("main") {
+            cinterops {
+                val git by creating
+            }
+        }
+        binaries {
+            executable {
+                entryPoint = "main"
+                baseName = "gitversion"
+                optimized = true
+                freeCompilerArgs = freeCompilerArgs + listOf("-Xoverride-konan-properties=linkerGccFlags=-lgcc -lgcc_eh -lc")
+
+                linkerOpts("-s", "-static", "./libs/libgit2.lib")
             }
         }
     }
@@ -39,6 +55,10 @@ kotlin {
             }
         }
         val linuxX64Main by getting {
+            dependsOn(nativeMain)
+        }
+
+        val windowsX64Main by getting {
             dependsOn(nativeMain)
         }
     }
