@@ -33,11 +33,11 @@ jobs:
       - name: Prepare Release for Linux
         if: ${{ matrix.config.system == 'linux' }}
         run: |
-          mkdir "${GITHUB_WORKSPACE}/release"
-          cp "${GITHUB_WORKSPACE}/build/bin/native/releaseExecutable/gitversion.kexe" "${GITHUB_WORKSPACE}/release/gitversion-${{ matrix.config.system }}-${{ matrix.config.arch }}"
+          mkdir "release"
+          cp "build/bin/native/releaseExecutable/gitversion.kexe" "release/gitversion-${{ matrix.config.system }}-${{ matrix.config.arch }}"
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ env.VERSION }}
           files: |
-            "${GITHUB_WORKSPACE}/release/*"
+            "release/*"
