@@ -21,8 +21,15 @@ else
   exit 2
 fi
 
+
+if [[ $GITVERSION == v0.0.* ]]; then
+  ARTIFACT="gitversion"
+else
+  ARTIFACT="gitversion-$PLATFORM-$ARCH"
+fi
+
 BINARY=$(mktemp)
-ARTIFACT="gitversion-$PLATFORM-$ARCH"
 VERSION=${GITVERSION:+download/$GITVERSION}
-URL=https://github.com/solugo/gitversion/releases/${TARGET:-latest/download}/$ARTIFACT
+URL=https://github.com/solugo/gitversion/releases/${VERSION:-latest/download}/$ARTIFACT
+echo $URL
 curl $URL -Lso $BINARY && chmod a+x $BINARY && $BINARY

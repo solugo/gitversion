@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   push:
     branches: [ main ]
+    paths:
+      exclude:
+        - docs
   pull_request:
     branches: [ main ]
 
