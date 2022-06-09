@@ -5,23 +5,27 @@ import gitversion.Pipeline
 fun main(args: Array<String>) {
 
     val configuration = Configuration(args)
-
     val versionRegex = configuration.versionPattern.toRegex(RegexOption.DOT_MATCHES_ALL)
     val tagRegex = configuration.tagPattern.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
     val majorRegex = configuration.majorPattern?.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
     val minorRegex = configuration.minorPattern?.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
     val patchRegex = configuration.patchPattern.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
+    val directory = configuration.directory
+    val verbose = configuration.verbose
+    val debug = configuration.debug
 
     val git = Git(configuration.path)
     val tags = hashMapOf<String, MutableList<Git.Tag>>()
     val changes = arrayListOf<VersionChange>()
 
     git.consumeTags { tag ->
+        if (verbose) println("Found tag $tag")
         tags.getOrPut(tag.commit, ::arrayListOf).add(tag)
         true
     }
 
-    git.consumeCommits { commit ->
+    git.consumeCommits(directory = directory) { commit ->
+
         tags[commit.id]?.forEach { tag ->
             tagRegex?.matchEntire(tag.name)?.takeIf { it.groupValues.size > 1 }?.also { match ->
                 match.groupValues.getOrNull(1)?.let(versionRegex::matchEntire)?.also { versionMatch ->
@@ -36,40 +40,42 @@ fun main(args: Array<String>) {
                     return@consumeCommits false
                 }
             }
-
         }
 
-        majorRegex?.matchEntire(commit.message)?.also {
+        if (commit.matches) {
+            if (debug) println("Found commit $commit")
+
+            majorRegex?.matchEntire(commit.message)?.also {
+                changes.add(
+                    VersionChange(commit) {
+                        major += 1
+                    }
+                )
+                return@consumeCommits true
+            }
+
+            minorRegex?.matchEntire(commit.message)?.also {
+                changes.add(
+                    VersionChange(commit) {
+                        minor += 1
+                    }
+                )
+                return@consumeCommits true
+            }
+
+            patchRegex?.matchEntire(commit.message)?.also {
+                changes.add(
+                    VersionChange(commit) {
+                        patch += 1
+                    }
+                )
+                return@consumeCommits true
+            }
+
             changes.add(
-                VersionChange(commit) {
-                    major += 1
-                }
+                VersionChange(commit, null)
             )
-            return@consumeCommits true
         }
-
-        minorRegex?.matchEntire(commit.message)?.also {
-            changes.add(
-                VersionChange(commit) {
-                    minor += 1
-                }
-            )
-            return@consumeCommits true
-        }
-
-        patchRegex?.matchEntire(commit.message)?.also {
-            changes.add(
-                VersionChange(commit) {
-                    patch += 1
-                }
-            )
-            return@consumeCommits true
-        }
-
-        changes.add(
-            VersionChange(commit, null)
-        )
-
         return@consumeCommits true
     }
 
@@ -91,6 +97,8 @@ fun main(args: Array<String>) {
     }
 
     println(version)
+
+    git.close()
 
 }
 
