@@ -22,9 +22,12 @@ kotlin {
                 entryPoint = "main"
                 baseName = "gitversion"
                 optimized = true
-                freeCompilerArgs = freeCompilerArgs + listOf("-Xoverride-konan-properties=linkerGccFlags=-lgcc -lgcc_eh -lc")
+            }
+            all {
+                freeCompilerArgs =
+                    freeCompilerArgs + listOf("-Xoverride-konan-properties=linkerGccFlags=-lgcc -lgcc_eh -lc")
 
-                linkerOpts("--as-needed", "--defsym=isnan=isnan", "-s", "-static", "./libs/linuxX64/libgit2.a")
+                linkerOpts("--as-needed", "--defsym=isnan=isnan", "-s", "-static")
             }
         }
     }
@@ -54,8 +57,16 @@ kotlin {
                 implementation("me.archinamon:file-io:1.3.5")
             }
         }
+        val nativeTest by creating {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-test:1.7.0")
+            }
+        }
         val linuxX64Main by getting {
             dependsOn(nativeMain)
+        }
+        val linuxX64Test by getting {
+            dependsOn(nativeTest)
         }
 
 //        val windowsX64Main by getting {

@@ -1,0 +1,7 @@
+version: "3"
+services:
+  gitversion:
+    container_name: gitversion
+    build:
+      dockerfile: ./Dockerfile
+    image: gitversion:latest

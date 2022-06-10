@@ -25,7 +25,7 @@ class Git(path: String) {
             this.also { value ->
                 if (value < 0) {
                     git_error_last()?.also {
-                        throw RuntimeException(it.pointed.run { "$value/$klass: ${message?.toKString()}" })
+                        error(it.pointed.run { "$value/$klass: ${message?.toKString()}" })
                     }
                 }
             }
@@ -38,11 +38,11 @@ class Git(path: String) {
         }
     }
 
-    fun consumeTags(callback: (Tag) -> Boolean) {
-        data class Parameters(val repository: CPointer<git_repository>, val callback: (Tag) -> Boolean)
+    fun consumeTags(regex: Regex?, callback: (Tag) -> Boolean) {
+        data class Parameters(val repository: CPointer<git_repository>, val regex: Regex?, val callback: (Tag) -> Boolean)
 
         val repository = checkNotNull(repositoryReference.pointed)
-        val parameters = Parameters(repository.ptr, callback)
+        val parameters = Parameters(repository.ptr, regex, callback)
 
         memScoped {
             val foreach: git_tag_foreach_cb =
@@ -64,7 +64,8 @@ class Git(path: String) {
                         val commit = git_object_id(target.ptr)?.pointed?.toKStringFromUtf8()
 
                         if (name != null && commit != null) {
-                            if (params.callback(Tag(name, commit))) 0 else 1
+                            val tag = Tag(name, commit, params.regex?.containsMatchIn(name) != false)
+                            if (params.callback(tag)) 0 else 1
                         } else {
                             0
                         }
@@ -103,8 +104,6 @@ class Git(path: String) {
                     1
                 }
 
-
-
             git_revwalk_new(walkPointer.ptr, repository.ptr)
 
             if (directory != null) {
@@ -112,11 +111,11 @@ class Git(path: String) {
                 diffOptions.payload = StableRef.create(parameters).asCPointer()
                 diffOptions.notify_cb = diffCallback
                 diffOptions.pathspec.count = 1U
-                diffOptions.pathspec.strings = arrayOf("$directory/**/*").toCStringArray(memScope)
+                diffOptions.pathspec.strings = arrayOf("$directory/*").toCStringArray(this)
             }
 
             walkPointer.pointed?.also { walk ->
-                git_revwalk_sorting(walk.ptr, GIT_SORT_TIME)
+                git_revwalk_sorting(walk.ptr, GIT_SORT_TOPOLOGICAL)
                 git_revwalk_push(walk.ptr, head.ptr)
 
                 while (true) {
@@ -144,7 +143,8 @@ class Git(path: String) {
                         }
                     }
 
-                    if (!callback(Commit(oid, message?.substringBefore("\n") ?: "", parameters.matches))) break
+                    val commit = Commit(oid, message?.substringBefore("\n") ?: "", parameters.matches)
+                    if (!callback(commit)) break
                 }
             }
         }
@@ -157,6 +157,7 @@ class Git(path: String) {
     data class Tag(
         val name: String,
         val commit: String,
+        val matches: Boolean,
     )
 
     data class Commit(

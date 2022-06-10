@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PLATFORM="$(uname -s)"
-ARCH="$(uname -i)"
+ARCH="$(uname -m)"
 
 if [[ "$PLATFORM" == "Linux" ]] || [[ "$PLATFORM" == "msys" ]] || [[ "$PLATFORM" == "cygwin" ]]; then
   PLATFORM="linux"
@@ -31,4 +31,4 @@ fi
 BINARY=$(mktemp)
 VERSION=${GITVERSION:+download/$GITVERSION}
 URL=https://github.com/solugo/gitversion/releases/${VERSION:-latest/download}/$ARTIFACT
-curl $URL -Lso $BINARY && chmod a+x $BINARY && $BINARY
+curl $URL -Lso $BINARY && chmod a+x $BINARY && $BINARY $ARGS
