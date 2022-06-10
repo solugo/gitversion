@@ -1,3 +1,4 @@
+import gitversion.Application
 import kotlinx.cinterop.*
 import platform.posix.*
 
@@ -32,4 +33,10 @@ fun withTemporaryGit(block: (String) -> Unit) {
 fun commit(message: String) {
     system("git add .")
     system("git commit -q --allow-empty -m '$message'")
+}
+
+fun process(vararg args: String, env: Map<String, String> = emptyMap()): String {
+    val out = StringBuilder()
+    Application(env = env::get, out = out::appendLine).execute(emptyArray<String>() + args)
+    return out.toString().trim()
 }

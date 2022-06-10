@@ -75,7 +75,7 @@ class Configuration(args: Array<String>) {
 
     val pipeline by parser.option(
         description = "apply build pipeline changes",
-        type = ArgType.String,
+        type = ArgType.Choice(listOf("auto", "none", "azure", "github"), { it }),
         fullName = "pipeline",
     ).default("auto")
 

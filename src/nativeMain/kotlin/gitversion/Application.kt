@@ -1,6 +1,9 @@
 package gitversion
 
-class Application(private val out: (String) -> Unit) {
+class Application(
+    private val out: (String) -> Unit,
+    private val env: (String) -> String?,
+) {
 
     fun execute(args: Array<String>) {
         val configuration = Configuration(args)
@@ -31,7 +34,7 @@ class Application(private val out: (String) -> Unit) {
                     tags.getOrPut(tag.commit, ::arrayListOf).add(tag)
                     true
                 }
-                if(!found) log("No tags found")
+                if (!found) log("No tags found")
             }
 
             step("Searching for commits", verbosity >= 2) { log ->
@@ -94,7 +97,7 @@ class Application(private val out: (String) -> Unit) {
                     }
                     return@consumeCommits true
                 }
-                if(!found) log("No commits found")
+                if (!found) log("No commits found")
             }
 
             step("Applying changes", verbosity >= 1) { log ->
@@ -116,7 +119,7 @@ class Application(private val out: (String) -> Unit) {
                 Pipeline.modifiers.forEach { modifier ->
                     when (configuration.pipeline) {
                         "auto", modifier.name -> {
-                            val modified = modifier.modify(Pipeline.Context(environment = environment))
+                            val modified = modifier.modify(Pipeline.Context(env = env, environment = environment))
                             pipelineModified = pipelineModified || modified
                             if (modified) log("Applied pipeline modifier '${modifier.name}'")
                         }

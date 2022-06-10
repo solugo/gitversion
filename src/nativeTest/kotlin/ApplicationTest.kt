@@ -1,4 +1,3 @@
-import gitversion.Application
 import platform.posix.system
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,10 +14,7 @@ class ApplicationTest {
         system("git tag v1.0.0")
         commit("commit 5")
 
-        val out = StringBuilder()
-        Application(out = out::appendLine).execute(arrayOf())
-
-        assertEquals("1.0.1", out.toString().trim())
+        assertEquals("1.0.1", process())
     }
 
     @Test
@@ -33,15 +29,8 @@ class ApplicationTest {
         system("git tag test2-v2.0.0")
         commit("commit 5")
 
-        val out1 = StringBuilder()
-        Application(out = out1::appendLine).execute(arrayOf("-tp", "test1.*"))
-
-        assertEquals("1.0.2", out1.toString().trim(), "version for test1")
-
-        val out2 = StringBuilder()
-        Application(out = out2::appendLine).execute(arrayOf("-tp", "test2.*"))
-
-        assertEquals("2.0.1", out2.toString().trim(), "version for test2")
+        assertEquals("1.0.2", process("-tp", "test1.*"), "version for test1")
+        assertEquals("2.0.1", process("-tp", "test2.*"), "version for test2")
     }
 
     @Test
@@ -52,10 +41,7 @@ class ApplicationTest {
         commit("release 4")
         commit("commit 5")
 
-        val out = StringBuilder()
-        Application(out = out::appendLine).execute(arrayOf("--major_pattern", "release"))
-
-        assertEquals("2.0.1", out.toString().trim(), "version for test1")
+        assertEquals("2.0.1", process("--major_pattern", "release"), "version for test1")
     }
 
     @Test
@@ -66,10 +52,7 @@ class ApplicationTest {
         commit("release 4")
         commit("commit 5")
 
-        val out = StringBuilder()
-        Application(out = out::appendLine).execute(arrayOf("--minor_pattern", "release"))
-
-        assertEquals("0.2.1", out.toString().trim(), "version for test1")
+        assertEquals("0.2.1", process("--minor_pattern", "release"), "version for test1")
     }
 
     @Test
@@ -80,10 +63,7 @@ class ApplicationTest {
         commit("release 4")
         commit("commit 5")
 
-        val out = StringBuilder()
-        Application(out = out::appendLine).execute(arrayOf("--patch_pattern", "release"))
-
-        assertEquals("0.0.2", out.toString().trim(), "version for test1")
+        assertEquals("0.0.2", process("--patch_pattern", "release"), "version for test1")
     }
 
     @Test
@@ -94,10 +74,7 @@ class ApplicationTest {
         commit("commit 2")
         commit("commit 3")
 
-        val out = StringBuilder()
-        Application(out = out::appendLine).execute(arrayOf("-d", "component"))
-
-        assertEquals("0.0.1", out.toString().trim(), "version for test1")
+        assertEquals("0.0.1", process("-d", "component"), "version for test1")
     }
 
 }

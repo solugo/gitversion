@@ -1,14 +1,12 @@
 package gitversion
 
-import kotlinx.cinterop.toKStringFromUtf8
 import me.archinamon.fileio.File
 import me.archinamon.fileio.appendText
-import platform.posix.getenv
 
 object Pipeline {
     val modifiers = listOf(
         Modifier("azure") {
-            val buildId = getenv("BUILD_BUILDID")?.toKStringFromUtf8()
+            val buildId = env("BUILD_BUILDID")
             when {
                 buildId != null -> {
                     environment["VERSION"]?.also { println("##vso[build.updatebuildnumber]$it") }
@@ -19,7 +17,7 @@ object Pipeline {
             }
         },
         Modifier("github") {
-            val env = getenv("GITHUB_ENV")?.toKStringFromUtf8()
+            val env = env("GITHUB_ENV")
             when {
                 env != null -> {
                     writeLinesToFile(env, environment.entries.map { "${it.key}=${it.value}" })
@@ -35,6 +33,13 @@ object Pipeline {
     }
 
 
-    data class Context(val environment: Map<String, String?>)
-    data class Modifier(val name: String, val modify: Context.() -> Boolean)
+    data class Context(
+        val env: (String) -> String?,
+        val environment: Map<String, String?>,
+    )
+
+    data class Modifier(
+        val name: String,
+        val modify: Context.() -> Boolean,
+    )
 }
