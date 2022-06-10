@@ -10,7 +10,7 @@ fun main(args: Array<String>) {
     val majorRegex = configuration.majorPattern?.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
     val minorRegex = configuration.minorPattern?.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
     val patchRegex = configuration.patchPattern.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
-    val directory = configuration.directory
+    val directory = configuration.directory?.takeUnless(String::isEmpty)
     val verbose = configuration.verbose
     val debug = configuration.debug
 
