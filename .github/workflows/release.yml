@@ -26,7 +26,7 @@ jobs:
       - name: Calculate version
         run: curl -Ls https://solugo.github.io/gitversion/run.sh | GITVERSION=v0.0.7 bash
       - name: Build
-        run: ./gradlew clean linuxX64Test linkReleaseExecutableLinuxX64
+        run: ./gradlew clean linuxX64Test linkReleaseExecutableLinuxX64 -Pversion={{ env.VERSION }}
       - name: Prepare Release
         run: |
           mkdir "release"
