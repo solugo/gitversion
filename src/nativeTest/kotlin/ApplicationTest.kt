@@ -29,8 +29,8 @@ class ApplicationTest {
         system("git tag test2-v2.0.0")
         commit("commit 5")
 
-        assertEquals("1.0.2", process("-tp", "test1.*"))
-        assertEquals("2.0.1", process("-tp", "test2.*"))
+        assertEquals("1.0.2", process("-tp", "test1-v(.+)"))
+        assertEquals("2.0.1", process("-tp", "test2-v(.+)"))
     }
 
     @Test
@@ -41,7 +41,7 @@ class ApplicationTest {
         commit("release 4")
         commit("commit 5")
 
-        assertEquals("2.0.1", process("--major_pattern", "release"))
+        assertEquals("2.0.1", process("--major_pattern", "release.+"))
     }
 
     @Test
@@ -52,7 +52,7 @@ class ApplicationTest {
         commit("release 4")
         commit("commit 5")
 
-        assertEquals("0.2.1", process("--minor_pattern", "release"))
+        assertEquals("0.2.1", process("--minor_pattern", "release.+"))
     }
 
     @Test
@@ -63,7 +63,7 @@ class ApplicationTest {
         commit("release 4")
         commit("commit 5")
 
-        assertEquals("0.0.2", process("--patch_pattern", "release"))
+        assertEquals("0.0.2", process("--patch_pattern", "release.+"))
     }
 
     @Test

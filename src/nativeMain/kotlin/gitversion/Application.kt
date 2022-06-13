@@ -57,29 +57,26 @@ class Application(
 
                     tags[commit.id]?.forEach { tag ->
                         if (tag.matches) {
-                            tagRegex?.find(tag.name)?.also { match ->
-                                val versionString = match.groupValues.getOrNull(1) ?: tag.name
-                                val versionParts = versionRegex.find(versionString)?.groupValues ?: error(
-                                    "Could find version in '$versionString' using $versionRegex"
-                                )
+                            tagRegex?.matchEntire(tag.name)?.also { match ->
+                                val value = match.groupValues.getOrNull(1) ?: match.value
+                                val parts = versionRegex.matchEntire(value)?.groupValues ?: return@forEach
 
                                 changes.add(VersionChange(tag) {
-                                    major += versionParts.getOrNull(1)?.takeUnless(String::isEmpty)?.toInt() ?: 0
-                                    minor += versionParts.getOrNull(2)?.takeUnless(String::isEmpty)?.toInt() ?: 0
-                                    patch += versionParts.getOrNull(3)?.takeUnless(String::isEmpty)?.toInt() ?: 0
+                                    major += parts.getOrNull(1)?.takeUnless(String::isEmpty)?.toInt() ?: 0
+                                    minor += parts.getOrNull(2)?.takeUnless(String::isEmpty)?.toInt() ?: 0
+                                    patch += parts.getOrNull(3)?.takeUnless(String::isEmpty)?.toInt() ?: 0
                                 })
 
                                 log("Reached $tag")
+
+                                return@consumeCommits false
                             }
-
-
-                            return@consumeCommits false
                         }
                     }
 
                     if (commit.matches) {
 
-                        majorRegex?.find(commit.message)?.also {
+                        majorRegex?.matchEntire(commit.message)?.also {
                             changes.add(VersionChange(commit) {
                                 major += 1
                                 minor = 0
@@ -88,7 +85,7 @@ class Application(
                             return@consumeCommits true
                         }
 
-                        minorRegex?.find(commit.message)?.also {
+                        minorRegex?.matchEntire(commit.message)?.also {
                             changes.add(VersionChange(commit) {
                                 minor += 1
                                 patch = 0
@@ -96,7 +93,7 @@ class Application(
                             return@consumeCommits true
                         }
 
-                        patchRegex?.find(commit.message)?.also {
+                        patchRegex?.matchEntire(commit.message)?.also {
                             changes.add(VersionChange(commit) {
                                 patch += 1
                             })
