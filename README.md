@@ -1,5 +1,6 @@
 ![](https://img.shields.io/github/workflow/status/solugo/gitversion/release?style=for-the-badge)
-![](https://img.shields.io/github/v/release/solugo/gitversion?style=for-the-badge) 
+![](https://img.shields.io/github/v/release/solugo/gitversion?style=for-the-badge)
+![](https://img.shields.io/github/license/solugo/gitversion?style=for-the-badge))
 
 # Git Version
 
