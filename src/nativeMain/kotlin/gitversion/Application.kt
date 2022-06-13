@@ -7,12 +7,24 @@ class Application(
 
     fun execute(args: Array<String>) {
         val configuration = Configuration(args)
+        val component = configuration.component?.takeUnless(String::isEmpty)
         val versionRegex = configuration.versionPattern.toRegex(RegexOption.DOT_MATCHES_ALL)
-        val tagRegex = configuration.tagPattern.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
+        val tagRegex = configuration.tagPattern.takeUnless(String::isEmpty).let {
+            when {
+                component == null -> it
+                else -> "$component-$it"
+            }
+        }?.toRegex(RegexOption.DOT_MATCHES_ALL)
         val majorRegex = configuration.majorPattern?.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
         val minorRegex = configuration.minorPattern?.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
         val patchRegex = configuration.patchPattern.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
-        val directory = configuration.directory?.takeUnless(String::isEmpty)
+        val directory = configuration.directory?.takeUnless(String::isEmpty).let {
+            when {
+                component == null -> it
+                it == null -> component
+                else -> "$component/$it"
+            }
+        }
         val stacktrace = configuration.stacktrace
         val verbosity = when {
             configuration.verbose2 -> 2

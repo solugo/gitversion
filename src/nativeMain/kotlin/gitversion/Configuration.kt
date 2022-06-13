@@ -67,6 +67,13 @@ class Configuration(args: Array<String>) {
         fullName = "directory",
     )
 
+    val component by parser.option(
+        description = "component name affecting directory and tag prefix",
+        type = ArgType.String,
+        shortName = "c",
+        fullName = "component",
+    )
+
     val path by parser.argument(
         description = "path to repository",
         type = ArgType.String,
