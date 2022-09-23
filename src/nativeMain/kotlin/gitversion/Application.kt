@@ -16,8 +16,14 @@ class Application(
             }
         }?.toRegex(RegexOption.DOT_MATCHES_ALL)
         val majorRegex = configuration.majorPattern?.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
+        val majorOverride = configuration.majorOverride
         val minorRegex = configuration.minorPattern?.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
+        val minorOverride = configuration.minorOverride
         val patchRegex = configuration.patchPattern.takeUnless(String::isEmpty)?.toRegex(RegexOption.DOT_MATCHES_ALL)
+        val patchOverride = configuration.patchOverride
+        val dirtyIgnore = configuration.dirtyIgnore
+        val dirtySuffix = configuration.dirtySuffix.takeUnless { it.isEmpty() }
+        val suffixOverride = configuration.suffixOverride
         val directory = configuration.directory?.takeUnless(String::isEmpty).let {
             when {
                 component == null -> it
@@ -34,9 +40,18 @@ class Application(
 
         try {
             val version = Version()
-            val git = Git(configuration.path)
+
+            val git = try {
+                Git(configuration.path)
+            } catch (ex: Exception) {
+                throw ExecutionError(
+                    message = "Could not open git repository in folder ${configuration.path}",
+                    reason = ExecutionError.Reason.NO_REPOSITORY,
+                )
+            }
             val tags = hashMapOf<String, MutableList<Git.Tag>>()
             val changes = arrayListOf<VersionChange>()
+            var dirty = false
 
             step("Searching for tags", verbosity >= 2) { log ->
                 var found = false
@@ -109,6 +124,19 @@ class Application(
                 if (!found) log("No commits found")
             }
 
+            if (!dirtyIgnore) {
+                var found = false
+                step("Check for modifications", verbosity >= 2) { log ->
+                    git.consumeModifications {
+                        found = true
+                        dirty = true
+                        log("Found ${it.file} ${it.status}")
+                        false
+                    }
+                    if (!found) log("No modification found")
+                }
+            }
+
             step("Applying changes", verbosity >= 1) { log ->
                 var changed = false
                 changes.reversed().forEach { change ->
@@ -116,7 +144,29 @@ class Application(
                     changed = true
                     log("Set version to $version due to ${change.reason}")
                 }
-                if (!changed) log("No changes applied")
+                if (dirty) {
+                    version.apply {
+                        patch += 1
+                        suffix = dirtySuffix ?: suffix
+                    }
+                    changed = true
+                    log("Set version to $version due to uncommitted modifications")
+                }
+                if (!changed) throw ExecutionError(
+                    message = "No git history found",
+                    reason = ExecutionError.Reason.NO_HISTORY,
+                )
+            }
+
+            if (majorOverride != null || minorOverride != null || patchOverride != null || suffixOverride != null) {
+                step("Applying overrides", verbosity >= 1) { log ->
+                    version.major = majorOverride ?: version.major
+                    version.minor = minorOverride ?: version.minor
+                    version.patch = patchOverride ?: version.patch
+                    version.suffix = suffixOverride ?: version.suffix
+
+                    log("Set version to $version due to overrides")
+                }
             }
 
             step("Modifying pipeline", verbosity >= 2) { log ->
@@ -159,8 +209,16 @@ class Application(
 
     data class VersionChange(val reason: Any, val modification: (Version.() -> Unit)?)
 
-    data class Version(var major: Int = 0, var minor: Int = 0, var patch: Int = 0) {
-        override fun toString(): String = "$major.$minor.$patch"
+    data class Version(var major: Int = 0, var minor: Int = 0, var patch: Int = 0, var suffix: String? = null) {
+        override fun toString(): String = "$major.$minor.$patch${suffix?.let { "-$it" } ?: ""}"
     }
+
+    class ExecutionError(message: String, val reason: Reason, cause: Exception? = null) : Error(message, cause) {
+        enum class Reason(val status: Int) {
+            NO_REPOSITORY(1),
+            NO_HISTORY(2)
+        }
+    }
+
 
 }

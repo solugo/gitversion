@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "1.7.0"
+    kotlin("multiplatform") version "1.7.10"
 }
 
 group = "de.solugo.gitversion"
@@ -53,7 +53,7 @@ kotlin {
     sourceSets {
         val nativeMain by creating {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.4")
+                implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
                 implementation("me.archinamon:file-io:1.3.5")
             }
         }

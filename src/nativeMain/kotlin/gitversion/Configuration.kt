@@ -86,6 +86,42 @@ class Configuration(args: Array<String>) {
         fullName = "pipeline",
     ).default("auto")
 
+    val dirtyIgnore by parser.option(
+        description = "ignore version change on dirty working tree",
+        type = ArgType.Boolean,
+        fullName = "dirty_ignore",
+    ).default(false)
+
+    val dirtySuffix by parser.option(
+        description = "apply version suffix on dirty working tree",
+        type = ArgType.String,
+        fullName = "dirty_suffix",
+    ).default("SNAPSHOT")
+
+    val majorOverride by parser.option(
+        description = "override version major value",
+        type = ArgType.Int,
+        fullName = "major_override",
+    )
+
+    val minorOverride by parser.option(
+        description = "override version minor value",
+        type = ArgType.Int,
+        fullName = "minor_override",
+    )
+
+    val patchOverride by parser.option(
+        description = "override version patch value",
+        type = ArgType.Int,
+        fullName = "patch_override",
+    )
+
+    val suffixOverride by parser.option(
+        description = "override version suffix value",
+        type = ArgType.String,
+        fullName = "suffix_override",
+    )
+
     init {
         parser.parse(args)
     }

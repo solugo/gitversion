@@ -11,6 +11,9 @@ import kotlinx.cinterop.*
 import kotlin.Boolean
 import kotlin.String
 import kotlin.also
+import kotlin.text.Regex
+import kotlin.text.removePrefix
+import kotlin.text.substringBefore
 
 class Git(path: String) {
     private val repositoryReference: CPointerVar<git_repository> = nativeHeap.allocPointerTo()
@@ -39,38 +42,41 @@ class Git(path: String) {
     }
 
     fun consumeTags(regex: Regex?, callback: (Tag) -> Boolean) {
-        data class Parameters(val repository: CPointer<git_repository>, val regex: Regex?, val callback: (Tag) -> Boolean)
+        data class Parameters(
+            val repository: CPointer<git_repository>,
+            val regex: Regex?,
+            val callback: (Tag) -> Boolean
+        )
 
         val repository = checkNotNull(repositoryReference.pointed)
         val parameters = Parameters(repository.ptr, regex, callback)
 
         memScoped {
-            val foreach: git_tag_foreach_cb =
-                staticCFunction { ref: CPointer<ByteVar>?, oid: CPointer<git_oid>?, payload: COpaquePointer? ->
-                    memScoped {
-                        val params = checkNotNull(payload).asStableRef<Parameters>().get()
+            val foreach: git_tag_foreach_cb = staticCFunction { ref, oid, payload ->
+                memScoped {
+                    val params = checkNotNull(payload).asStableRef<Parameters>().get()
 
-                        val source = allocPointerTo<git_object>().let {
-                            git_object_lookup(it.ptr, params.repository, oid, GIT_OBJECT_ANY)
-                            it.pointed ?: return@staticCFunction 1
-                        }
+                    val source = allocPointerTo<git_object>().let {
+                        git_object_lookup(it.ptr, params.repository, oid, GIT_OBJECT_ANY)
+                        it.pointed ?: return@staticCFunction 1
+                    }
 
-                        val target = allocPointerTo<git_object>().let {
-                            git_object_peel(it.ptr, source.ptr, GIT_OBJECT_COMMIT).handleGitError()
-                            it.pointed ?: return@staticCFunction 1
-                        }
+                    val target = allocPointerTo<git_object>().let {
+                        git_object_peel(it.ptr, source.ptr, GIT_OBJECT_COMMIT).handleGitError()
+                        it.pointed ?: return@staticCFunction 1
+                    }
 
-                        val name = ref?.toKStringFromUtf8()?.removePrefix("refs/tags/")
-                        val commit = git_object_id(target.ptr)?.pointed?.toKStringFromUtf8()
+                    val name = ref?.toKStringFromUtf8()?.removePrefix("refs/tags/")
+                    val commit = git_object_id(target.ptr)?.pointed?.toKStringFromUtf8()
 
-                        if (name != null && commit != null) {
-                            val tag = Tag(name, commit, params.regex?.containsMatchIn(name) != false)
-                            if (params.callback(tag)) 0 else 1
-                        } else {
-                            0
-                        }
+                    if (name != null && commit != null) {
+                        val tag = Tag(name, commit, params.regex?.containsMatchIn(name) != false)
+                        if (params.callback(tag)) 0 else 1
+                    } else {
+                        0
                     }
                 }
+            }
 
             git_tag_foreach(repositoryReference.pointed?.ptr, foreach, StableRef.create(parameters).asCPointer())
         }
@@ -98,11 +104,10 @@ class Git(path: String) {
             val parentTreePointer = allocPointerTo<git_tree>()
             val diffPointer = allocPointerTo<git_diff>()
             val diffOptions = alloc<git_diff_options>()
-            val diffCallback: git_diff_notify_cb =
-                staticCFunction { _: CPointer<git_diff>?, _: CPointer<git_diff_delta>?, _: CPointer<ByteVar>?, payload: COpaquePointer? ->
-                    checkNotNull(payload).asStableRef<Parameters>().get().matches = true
-                    1
-                }
+            val diffCallback: git_diff_notify_cb = staticCFunction { _, _, _, payload ->
+                checkNotNull(payload).asStableRef<Parameters>().get().matches = true
+                1
+            }
 
             git_revwalk_new(walkPointer.ptr, repository.ptr)
 
@@ -150,6 +155,45 @@ class Git(path: String) {
         }
     }
 
+    fun consumeModifications(
+        callback: (Modification) -> Boolean,
+    ) {
+        memScoped {
+            val repository = checkNotNull(repositoryReference.pointed)
+
+            data class Parameters(var callback: (Modification) -> Boolean)
+
+            val statusCallback: git_status_cb = staticCFunction { path, status, payload ->
+                fun UInt.hasBitSet(value: UInt) = (this and value) == value
+
+                val modification = Modification(
+                    file = path?.toKStringFromUtf8(),
+                    status = buildSet {
+                        if (status.hasBitSet(GIT_STATUS_IGNORED)) return@buildSet
+                        if (status.hasBitSet(GIT_STATUS_INDEX_NEW)) add(ModificationStatus.NEW)
+                        if (status.hasBitSet(GIT_STATUS_INDEX_MODIFIED)) add(ModificationStatus.MODIFIED)
+                        if (status.hasBitSet(GIT_STATUS_INDEX_RENAMED)) add(ModificationStatus.RENAMED)
+                        if (status.hasBitSet(GIT_STATUS_INDEX_DELETED)) add(ModificationStatus.DELETED)
+                        if (status.hasBitSet(GIT_STATUS_INDEX_TYPECHANGE)) add(ModificationStatus.TYPECHANGE)
+                        if (status.hasBitSet(GIT_STATUS_WT_NEW)) add(ModificationStatus.NEW)
+                        if (status.hasBitSet(GIT_STATUS_WT_MODIFIED)) add(ModificationStatus.MODIFIED)
+                        if (status.hasBitSet(GIT_STATUS_WT_RENAMED)) add(ModificationStatus.RENAMED)
+                        if (status.hasBitSet(GIT_STATUS_WT_DELETED)) add(ModificationStatus.DELETED)
+                        if (status.hasBitSet(GIT_STATUS_WT_TYPECHANGE)) add(ModificationStatus.TYPECHANGE)
+                    }
+                )
+
+                if (modification.status.isEmpty()) return@staticCFunction 0
+
+                if (checkNotNull(payload).asStableRef<Parameters>().get().callback(modification)) 1 else 0
+            }
+
+            val parameters = Parameters(callback)
+
+            git_status_foreach(repository.ptr, statusCallback, StableRef.create(parameters).asCPointer())
+        }
+    }
+
     fun close() {
         nativeHeap.free(repositoryReference)
     }
@@ -159,6 +203,15 @@ class Git(path: String) {
         val commit: String,
         val matches: Boolean,
     )
+
+    data class Modification(
+        val file: String?,
+        val status: Set<ModificationStatus>,
+    )
+
+    enum class ModificationStatus {
+        NEW, MODIFIED, DELETED, RENAMED, TYPECHANGE, OTHER
+    }
 
     data class Commit(
         val id: String,

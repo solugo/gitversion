@@ -1,6 +1,8 @@
+import gitversion.Application
 import platform.posix.system
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.fail
 
 class ApplicationTest {
 
@@ -106,5 +108,84 @@ class ApplicationTest {
         assertEquals("1.0.1", process("-c", "component", "-d", "sub", "-tp", "x(.+)"))
     }
 
+    @Test
+    fun `process with uncommited changes and default suffix`() = withTemporaryGit {
+        commit("commit 1")
+        system("echo 'value' > file.txt")
+
+        assertEquals("0.0.2-SNAPSHOT", process())
+    }
+
+    @Test
+    fun `process with uncommited changes and custom suffix`() = withTemporaryGit {
+        commit("commit 1")
+        system("echo 'value' > file.txt")
+
+        assertEquals("0.0.2-CUSTOM", process("--dirty_suffix", "CUSTOM"))
+    }
+
+    @Test
+    fun `process with uncommited changes and without suffix`() = withTemporaryGit {
+        commit("commit 1")
+        system("echo 'value' > file.txt")
+
+        assertEquals("0.0.2", process("--dirty_suffix", ""))
+    }
+
+    @Test
+    fun `process with uncommited changes and deactivated dirty handling`() = withTemporaryGit {
+        commit("commit 1")
+        system("echo 'value' > file.txt")
+
+        assertEquals("0.0.1", process("--dirty_ignore"))
+    }
+
+    @Test
+    fun `process with major override`() = withTemporaryGit {
+        commit("commit 1")
+
+        assertEquals("2.0.1", process("--major_override", "2"))
+    }
+
+    @Test
+    fun `process with minor override`() = withTemporaryGit {
+        commit("commit 1")
+
+        assertEquals("0.2.1", process("--minor_override", "2"))
+    }
+
+    @Test
+    fun `process with patch override`() = withTemporaryGit {
+        commit("commit 1")
+
+        assertEquals("0.0.2", process("--patch_override", "2"))
+    }
+
+    @Test
+    fun `process with suffix override`() = withTemporaryGit {
+        commit("commit 1")
+
+        assertEquals("0.0.1-CUSTOM", process("--suffix_override", "CUSTOM"))
+    }
+
+    @Test
+    fun `failure on missing repository`() = withTemporaryGit(create = false) {
+        try {
+            process()
+            fail("No exception thrown")
+        } catch (ex: Application.ExecutionError) {
+            assertEquals(ex.reason, Application.ExecutionError.Reason.NO_REPOSITORY)
+        }
+    }
+
+    @Test
+    fun `failure on empty history`() = withTemporaryGit {
+        try {
+            process()
+            fail("No exception thrown")
+        } catch (ex: Application.ExecutionError) {
+            assertEquals(ex.reason, Application.ExecutionError.Reason.NO_HISTORY)
+        }
+    }
 
 }

@@ -2,7 +2,7 @@ import gitversion.Application
 import kotlinx.cinterop.*
 import platform.posix.*
 
-fun withTemporaryGit(block: (String) -> Unit) {
+fun withTemporaryGit(create: Boolean = true, block: (String) -> Unit) {
     val current = memScoped {
         val size: size_t = 10000U
         allocArray<ByteVar>(size.toInt()).also { getcwd(it, size) }.toKStringFromUtf8()
@@ -20,9 +20,11 @@ fun withTemporaryGit(block: (String) -> Unit) {
 
         chdir(path)
 
-        system("git init -q")
-        system("git config user.email test@solugo.de")
-        system("git config user.name 'Test User'")
+        if (create) {
+            system("git init -q")
+            system("git config user.email test@solugo.de")
+            system("git config user.name 'Test User'")
+        }
 
         block(path)
     } finally {
