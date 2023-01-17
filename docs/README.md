@@ -8,9 +8,9 @@
 curl -Ls https://solugo.github.io/gitversion/run.sh | bash
 ```
 
-### Specific Version
+### Specific Version And Arguments
 ```bash
-curl -Ls https://solugo.github.io/gitversion/run.sh | GITVERSION=<version> bash
+curl -Ls https://solugo.github.io/gitversion/run.sh | GITVERSION="<version>" ARGS="<args>" bash
 ```
 
 ## Download
