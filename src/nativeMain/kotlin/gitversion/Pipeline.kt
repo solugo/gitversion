@@ -9,10 +9,11 @@ object Pipeline {
             val buildId = env("BUILD_BUILDID")
             when {
                 buildId != null -> {
-                    environment["VERSION"]?.also { println("##vso[build.updatebuildnumber]$it") }
-                    environment.entries.forEach { (key, value) -> println("##vso[task.setvariable variable=$key]$value") }
+                    environment["VERSION"]?.also { out("##vso[build.updatebuildnumber]$it") }
+                    environment.entries.forEach { (key, value) -> out("##vso[task.setvariable variable=$key]$value") }
                     true
                 }
+
                 else -> false
             }
         },
@@ -23,6 +24,18 @@ object Pipeline {
                     writeLinesToFile(env, environment.entries.map { "${it.key}=${it.value}" })
                     true
                 }
+
+                else -> false
+            }
+        },
+        Modifier("gitlab") {
+            val env = env("GITLAB_CI")
+            when {
+                env != null -> {
+                    writeLinesToFile(params.getValue("dotenv"), environment.entries.map { "${it.key}=${it.value}" })
+                    true
+                }
+
                 else -> false
             }
         },
@@ -36,10 +49,13 @@ object Pipeline {
     data class Context(
         val env: (String) -> String?,
         val environment: Map<String, String?>,
+        val out: (String) -> Unit,
+        val params: Map<String, String>,
     )
 
     data class Modifier(
         val name: String,
         val modify: Context.() -> Boolean,
     )
+
 }

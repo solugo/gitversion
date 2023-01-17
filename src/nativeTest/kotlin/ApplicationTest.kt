@@ -1,7 +1,11 @@
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.isEqualTo
 import gitversion.Application
+import me.archinamon.fileio.File
+import me.archinamon.fileio.readText
 import platform.posix.system
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.fail
 
 class ApplicationTest {
@@ -16,7 +20,7 @@ class ApplicationTest {
         system("git tag v1.0.0")
         commit("commit 5")
 
-        assertEquals("1.0.1", process())
+        assertThat(process()).isEqualTo("1.0.1")
     }
 
     @Test
@@ -31,8 +35,8 @@ class ApplicationTest {
         system("git tag test2-v2.0.0")
         commit("commit 5")
 
-        assertEquals("1.0.2", process("-tp", "test1-v(.+)"))
-        assertEquals("2.0.1", process("-tp", "test2-v(.+)"))
+        assertThat(process("-tp", "test1-v(.+)")).isEqualTo("1.0.2")
+        assertThat(process("-tp", "test2-v(.+)")).isEqualTo("2.0.1")
     }
 
     @Test
@@ -43,7 +47,7 @@ class ApplicationTest {
         commit("release 4")
         commit("commit 5")
 
-        assertEquals("2.0.1", process("--major_pattern", "release.+"))
+        assertThat(process("--major_pattern", "release.+")).isEqualTo("2.0.1")
     }
 
     @Test
@@ -54,7 +58,7 @@ class ApplicationTest {
         commit("release 4")
         commit("commit 5")
 
-        assertEquals("0.2.1", process("--minor_pattern", "release.+"))
+        assertThat(process("--minor_pattern", "release.+")).isEqualTo("0.2.1")
     }
 
     @Test
@@ -65,7 +69,7 @@ class ApplicationTest {
         commit("release 4")
         commit("commit 5")
 
-        assertEquals("0.0.2", process("--patch_pattern", "release.+"))
+        assertThat(process("--patch_pattern", "release.+")).isEqualTo("0.0.2")
     }
 
     @Test
@@ -76,7 +80,7 @@ class ApplicationTest {
         commit("commit 2")
         commit("commit 3")
 
-        assertEquals("0.0.1", process("-d", "component"))
+        assertThat(process("-d", "component")).isEqualTo("0.0.1")
     }
 
     @Test
@@ -89,7 +93,7 @@ class ApplicationTest {
         system("echo 'value' > component/file.txt")
         commit("commit 3")
 
-        assertEquals("1.0.1", process("-c", "component"))
+        assertThat(process("-c", "component")).isEqualTo("1.0.1")
     }
 
     @Test
@@ -105,7 +109,7 @@ class ApplicationTest {
         system("echo 'value' > component/sub/file.txt")
         commit("commit 4")
 
-        assertEquals("1.0.1", process("-c", "component", "-d", "sub", "-tp", "x(.+)"))
+        assertThat(process("-c", "component", "-d", "sub", "-tp", "x(.+)")).isEqualTo("1.0.1")
     }
 
     @Test
@@ -113,7 +117,7 @@ class ApplicationTest {
         commit("commit 1")
         system("echo 'value' > file.txt")
 
-        assertEquals("0.0.2-SNAPSHOT", process())
+        assertThat(process()).isEqualTo("0.0.2-SNAPSHOT")
     }
 
     @Test
@@ -121,7 +125,7 @@ class ApplicationTest {
         commit("commit 1")
         system("echo 'value' > file.txt")
 
-        assertEquals("0.0.2-CUSTOM", process("--dirty_suffix", "CUSTOM"))
+        assertThat(process("--dirty_suffix", "CUSTOM")).isEqualTo("0.0.2-CUSTOM")
     }
 
     @Test
@@ -129,7 +133,7 @@ class ApplicationTest {
         commit("commit 1")
         system("echo 'value' > file.txt")
 
-        assertEquals("0.0.2", process("--dirty_suffix", ""))
+        assertThat(process("--dirty_suffix", "")).isEqualTo("0.0.2")
     }
 
     @Test
@@ -137,35 +141,35 @@ class ApplicationTest {
         commit("commit 1")
         system("echo 'value' > file.txt")
 
-        assertEquals("0.0.1", process("--dirty_ignore"))
+        assertThat(process("--dirty_ignore")).isEqualTo("0.0.1")
     }
 
     @Test
     fun `process with major override`() = withTemporaryGit {
         commit("commit 1")
 
-        assertEquals("2.0.1", process("--major_override", "2"))
+        assertThat(process("--major_override", "2")).isEqualTo("2.0.1")
     }
 
     @Test
     fun `process with minor override`() = withTemporaryGit {
         commit("commit 1")
 
-        assertEquals("0.2.1", process("--minor_override", "2"))
+        assertThat(process("--minor_override", "2")).isEqualTo("0.2.1")
     }
 
     @Test
     fun `process with patch override`() = withTemporaryGit {
         commit("commit 1")
 
-        assertEquals("0.0.2", process("--patch_override", "2"))
+        assertThat(process("--patch_override", "2")).isEqualTo("0.0.2")
     }
 
     @Test
     fun `process with suffix override`() = withTemporaryGit {
         commit("commit 1")
 
-        assertEquals("0.0.1-CUSTOM", process("--suffix_override", "CUSTOM"))
+        assertThat(process("--suffix_override", "CUSTOM")).isEqualTo("0.0.1-CUSTOM")
     }
 
     @Test
@@ -174,7 +178,7 @@ class ApplicationTest {
             process()
             fail("No exception thrown")
         } catch (ex: Application.ExecutionError) {
-            assertEquals(ex.reason, Application.ExecutionError.Reason.NO_REPOSITORY)
+            assertThat(ex.reason).isEqualTo(Application.ExecutionError.Reason.NO_REPOSITORY)
         }
     }
 
@@ -184,8 +188,42 @@ class ApplicationTest {
             process()
             fail("No exception thrown")
         } catch (ex: Application.ExecutionError) {
-            assertEquals(ex.reason, Application.ExecutionError.Reason.NO_HISTORY)
+            assertThat(ex.reason).isEqualTo(Application.ExecutionError.Reason.NO_HISTORY)
         }
     }
+
+    @Test
+    fun `provide azure environment`() = withTemporaryGit {
+        commit("commit 1")
+        assertThat(process("--pipeline", "azure", env = mapOf("BUILD_BUILDID" to "custom"))).apply {
+            contains("##vso[build.updatebuildnumber]0.0.1")
+            contains("##vso[task.setvariable variable=VERSION]0.0.1")
+        }
+    }
+
+    @Test
+    fun `provide github environment`() = withTemporaryGit {
+        commit("commit 1")
+        process("--pipeline", "github", env = mapOf("GITHUB_ENV" to "github.env"))
+
+        assertThat(File("github.env").readText(), "VERSION=0.0.1\n")
+    }
+
+    @Test
+    fun `provide gitlab environment with default config`() = withTemporaryGit {
+        commit("commit 1")
+        process("--pipeline", "gitlab", env = mapOf("GITLAB_CI" to "true"))
+
+        assertThat(File("build.env").readText(), "VERSION=0.0.1\n")
+    }
+
+    @Test
+    fun `provide gitlab environment with custom config`() = withTemporaryGit {
+        commit("commit 1")
+        process("--pipeline", "gitlab", "--pipeline-gitlab-dotenv", "my.env", env = mapOf("GITLAB_CI" to "true"))
+
+        assertThat(File("my.env").readText(), "VERSION=0.0.1\n")
+    }
+
 
 }

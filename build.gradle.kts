@@ -60,6 +60,7 @@ kotlin {
         val nativeTest by creating {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-test:1.7.0")
+                implementation("com.willowtreeapps.assertk:assertk:0.25")
             }
         }
         val linuxX64Main by getting {

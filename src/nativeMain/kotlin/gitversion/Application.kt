@@ -178,7 +178,20 @@ class Application(
                 Pipeline.modifiers.forEach { modifier ->
                     when (configuration.pipeline) {
                         "auto", modifier.name -> {
-                            val modified = modifier.modify(Pipeline.Context(env = env, environment = environment))
+                            val modified = modifier.modify(
+                                Pipeline.Context(
+                                    out = out,
+                                    env = env,
+                                    environment = environment,
+                                    params = when (modifier.name) {
+                                        "gitlab" -> mapOf(
+                                            "dotenv" to configuration.pipelineGitlabDotenv
+                                        )
+
+                                        else -> emptyMap()
+                                    }
+                                ),
+                            )
                             pipelineModified = pipelineModified || modified
                             if (modified) log("Applied pipeline modifier '${modifier.name}'")
                         }

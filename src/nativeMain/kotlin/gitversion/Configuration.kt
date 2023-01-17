@@ -82,9 +82,15 @@ class Configuration(args: Array<String>) {
 
     val pipeline by parser.option(
         description = "apply build pipeline changes",
-        type = ArgType.Choice(listOf("auto", "none", "azure", "github"), { it }),
+        type = ArgType.Choice(listOf("auto", "none", "azure", "github", "gitlab"), { it }),
         fullName = "pipeline",
     ).default("auto")
+
+    val pipelineGitlabDotenv by parser.option(
+        description = "gitlab dotenv file (see https://docs.gitlab.com/ee/ci/environments/index.html#set-dynamic-environment-urls-after-a-job-finishes)",
+        type = ArgType.String,
+        fullName = "pipeline-gitlab-dotenv",
+    ).default("build.env")
 
     val dirtyIgnore by parser.option(
         description = "ignore version change on dirty working tree",
