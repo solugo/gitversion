@@ -204,9 +204,10 @@ class ApplicationTest {
     @Test
     fun `provide github environment`() = withTemporaryGit {
         commit("commit 1")
-        process("--pipeline", "github", env = mapOf("GITHUB_ENV" to "github.env"))
+        process("--pipeline", "github", env = mapOf("GITHUB_ENV" to "github.env", "GITHUB_OUTPUT" to "github.out"))
 
         assertThat(File("github.env").readText(), "VERSION=0.0.1\n")
+        assertThat(File("github.out").readText(), "VERSION=0.0.1\n")
     }
 
     @Test

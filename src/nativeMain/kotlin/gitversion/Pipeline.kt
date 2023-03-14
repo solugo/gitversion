@@ -18,15 +18,18 @@ object Pipeline {
             }
         },
         Modifier("github") {
-            val env = env("GITHUB_ENV")
-            when {
-                env != null -> {
-                    writeLinesToFile(env, environment.entries.map { "${it.key}=${it.value}" })
-                    true
-                }
+            var modified = false
 
-                else -> false
+            env("GITHUB_ENV")?.also { envFile ->
+                writeLinesToFile(envFile, environment.entries.map { "${it.key}=${it.value}" })
+                modified = true
             }
+            env("GITHUB_OUTPUT")?.also { outputFile ->
+                writeLinesToFile(outputFile, environment.entries.map { "${it.key}=${it.value}" })
+                modified = true
+            }
+
+            modified
         },
         Modifier("gitlab") {
             val env = env("GITLAB_CI")
