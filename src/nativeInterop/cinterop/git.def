@@ -3,3 +3,4 @@ package = git
 compilerOpts.linux = -I./libs/include
 compilerOpts.mingw = -I./libs/include
 linkerOpts.linux = ./libs/linuxX64/libgit2.a
+linkerOpts.mingw = ./libs/windowsX64/libgit2.a

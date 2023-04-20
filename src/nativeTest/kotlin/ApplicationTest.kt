@@ -1,6 +1,7 @@
 import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.isEqualTo
+import assertk.assertions.matches
 import gitversion.Application
 import me.archinamon.fileio.File
 import me.archinamon.fileio.readText
@@ -75,8 +76,8 @@ class ApplicationTest {
     @Test
     fun `process with directory`() = withTemporaryGit {
         commit("commit 1")
-        system("mkdir component")
-        system("echo 'value' > component/file.txt")
+        createDirectory("component")
+        system("echo \"value\" > component/file.txt")
         commit("commit 2")
         commit("commit 3")
 
@@ -89,8 +90,8 @@ class ApplicationTest {
         system("git tag v0.1.0")
         commit("commit 2")
         system("git tag component-v1.0.0")
-        system("mkdir component")
-        system("echo 'value' > component/file.txt")
+        createDirectory("component")
+        system("echo \"value\" > component/file.txt")
         commit("commit 3")
 
         assertThat(process("-c", "component")).isEqualTo("1.0.1")
@@ -101,12 +102,12 @@ class ApplicationTest {
         commit("commit 1")
         system("git tag v0.1.0")
         commit("commit 2")
-        system("mkdir component")
-        system("echo 'value' > component/file.txt")
+        createDirectory("component")
+        system("echo \"value\" > component/file.txt")
         commit("commit 3")
         system("git tag component-x1.0.0")
-        system("mkdir component/sub")
-        system("echo 'value' > component/sub/file.txt")
+        createDirectory("component/sub")
+        system("echo \"value\" > component/sub/file.txt")
         commit("commit 4")
 
         assertThat(process("-c", "component", "-d", "sub", "-tp", "x(.+)")).isEqualTo("1.0.1")
@@ -115,7 +116,7 @@ class ApplicationTest {
     @Test
     fun `process with uncommited changes and default suffix`() = withTemporaryGit {
         commit("commit 1")
-        system("echo 'value' > file.txt")
+        system("echo \"value\" > file.txt")
 
         assertThat(process()).isEqualTo("0.0.2-SNAPSHOT")
     }
@@ -123,7 +124,7 @@ class ApplicationTest {
     @Test
     fun `process with uncommited changes and custom suffix`() = withTemporaryGit {
         commit("commit 1")
-        system("echo 'value' > file.txt")
+        system("echo \"value\" > file.txt")
 
         assertThat(process("--dirty_suffix", "CUSTOM")).isEqualTo("0.0.2-CUSTOM")
     }
@@ -131,7 +132,7 @@ class ApplicationTest {
     @Test
     fun `process with uncommited changes and without suffix`() = withTemporaryGit {
         commit("commit 1")
-        system("echo 'value' > file.txt")
+        system("echo \"value\" > file.txt")
 
         assertThat(process("--dirty_suffix", "")).isEqualTo("0.0.2")
     }
@@ -139,7 +140,7 @@ class ApplicationTest {
     @Test
     fun `process with uncommited changes and deactivated dirty handling`() = withTemporaryGit {
         commit("commit 1")
-        system("echo 'value' > file.txt")
+        system("echo \"value\" > file.txt")
 
         assertThat(process("--dirty_ignore")).isEqualTo("0.0.1")
     }
@@ -170,6 +171,19 @@ class ApplicationTest {
         commit("commit 1")
 
         assertThat(process("--suffix_override", "CUSTOM")).isEqualTo("0.0.1-CUSTOM")
+    }
+
+    @Test
+    fun `process with appended hash`() = withTemporaryGit {
+        commit("commit 1")
+        commit("commit 2")
+        system("git tag v0.1.0")
+        commit("commit 3")
+        commit("commit 4")
+        system("git tag v1.0.0")
+        commit("commit 5")
+
+        assertThat(process("--append_hash")).matches("1.0.1[+][0-9a-f]{7}".toRegex())
     }
 
     @Test

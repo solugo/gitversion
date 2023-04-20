@@ -128,6 +128,12 @@ class Configuration(args: Array<String>) {
         fullName = "suffix_override",
     )
 
+    val appendHash by parser.option(
+        description = "append hash to version",
+        type = ArgType.Boolean,
+        fullName = "append_hash",
+    ).default(false)
+
     init {
         parser.parse(args)
     }

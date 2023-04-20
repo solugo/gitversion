@@ -24,6 +24,7 @@ class Application(
         val dirtyIgnore = configuration.dirtyIgnore
         val dirtySuffix = configuration.dirtySuffix.takeUnless { it.isEmpty() }
         val suffixOverride = configuration.suffixOverride
+        val appendHash = configuration.appendHash
         val directory = configuration.directory?.takeUnless(String::isEmpty).let {
             when {
                 component == null -> it
@@ -52,6 +53,7 @@ class Application(
             val tags = hashMapOf<String, MutableList<Git.Tag>>()
             val changes = arrayListOf<VersionChange>()
             var dirty = false
+            var hash: String? = null
 
             step("Searching for tags", verbosity >= 2) { log ->
                 var found = false
@@ -69,6 +71,8 @@ class Application(
                 git.consumeCommits(directory = directory) { commit ->
                     found = true
                     log("Found $commit")
+
+                    if (hash == null) hash = commit.id
 
                     tags[commit.id]?.forEach { tag ->
                         if (tag.matches) {
@@ -169,6 +173,14 @@ class Application(
                 }
             }
 
+            if (appendHash && hash != null) {
+                step("Appending hash", verbosity >= 1) { log ->
+                    version.hash = hash
+
+                    log("Set version to $version by appending hash")
+                }
+            }
+
             step("Modifying pipeline", verbosity >= 2) { log ->
                 val environment = mapOf(
                     "VERSION" to version.toString(),
@@ -222,8 +234,18 @@ class Application(
 
     data class VersionChange(val reason: Any, val modification: (Version.() -> Unit)?)
 
-    data class Version(var major: Int = 0, var minor: Int = 0, var patch: Int = 0, var suffix: String? = null) {
-        override fun toString(): String = "$major.$minor.$patch${suffix?.let { "-$it" } ?: ""}"
+    data class Version(
+        var major: Int = 0,
+        var minor: Int = 0,
+        var patch: Int = 0,
+        var suffix: String? = null,
+        var hash: String? = null,
+    ) {
+        override fun toString(): String = run {
+            val actualSuffix = suffix?.let { "-$it" } ?: ""
+            val actualHash = hash?.substring(0 until 7)?.let { "+$it" } ?: ""
+            "$major.$minor.$patch$actualSuffix$actualHash"
+        }
     }
 
     class ExecutionError(message: String, val reason: Reason, cause: Exception? = null) : Error(message, cause) {
