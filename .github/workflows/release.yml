@@ -39,4 +39,4 @@ jobs:
           tag_name: v${{ env.VERSION }}
           files: |
             release/gitversion-linux-x64
-            release/gitversion-windows-x64
+            release/gitversion-windows-x64.exe

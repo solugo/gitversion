@@ -243,7 +243,7 @@ class Application(
     ) {
         override fun toString(): String = run {
             val actualSuffix = suffix?.let { "-$it" } ?: ""
-            val actualHash = hash?.substring(0 until 7)?.let { "+$it" } ?: ""
+            val actualHash = hash?.substring(0 until 8)?.let { "+$it" } ?: ""
             "$major.$minor.$patch$actualSuffix$actualHash"
         }
     }
