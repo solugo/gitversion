@@ -32,7 +32,7 @@ jobs:
         run: |
           mkdir "release"
           cp "build/bin/linuxX64/releaseExecutable/gitversion.kexe" "release/gitversion-linux-x64"
-          cp "build/bin/windowsX64/releaseExecutable/gitversion.kexe" "release/gitversion-windows-x64"
+          cp "build/bin/windowsX64/releaseExecutable/gitversion.exe" "release/gitversion-windows-x64.exe"
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
