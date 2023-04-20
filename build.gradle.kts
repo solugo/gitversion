@@ -1,3 +1,6 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
 plugins {
     kotlin("multiplatform") version "1.8.20"
 }
@@ -81,5 +84,13 @@ kotlin {
             dependsOn(nativeTest)
         }
 
+    }
+}
+
+tasks.withType<AbstractTestTask> {
+    testLogging {
+        events(TestLogEvent.PASSED, TestLogEvent.FAILED)
+        showExceptions = true
+        exceptionFormat = TestExceptionFormat.FULL
     }
 }

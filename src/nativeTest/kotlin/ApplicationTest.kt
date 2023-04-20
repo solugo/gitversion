@@ -183,7 +183,7 @@ class ApplicationTest {
         system("git tag v1.0.0")
         commit("commit 5")
 
-        assertThat(process("--append_hash")).matches("1.0.1[+][0-9a-f]{7}".toRegex())
+        assertThat(process("--append_hash")).matches("1.0.1[+][0-9a-f]{8}".toRegex())
     }
 
     @Test
