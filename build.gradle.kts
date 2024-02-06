@@ -28,7 +28,7 @@ kotlin {
                     "-Xoverride-konan-properties=linkerGccFlags=-lgcc -lgcc_eh -lc",
                 )
 
-//                linkerOpts("--as-needed", "--defsym=isnan=isnan", "-s", "-static")
+                linkerOpts("--as-needed")
             }
         }
     }
@@ -53,7 +53,7 @@ kotlin {
             dependencies {
                 implementation("com.squareup.okio:okio:3.7.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.6")
-                implementation("me.archinamon:file-io:1.3.9")
+                implementation("me.archinamon:file-io:1.3.5")
             }
         }
         val nativeTest by creating {
