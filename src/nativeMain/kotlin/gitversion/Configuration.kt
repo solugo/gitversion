@@ -4,9 +4,10 @@ import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
 import kotlinx.cli.optional
+import me.archinamon.fileio.File
+import me.archinamon.fileio.readText
 
 class Configuration(args: Array<String>) {
-
     val parser = ArgParser("gitversion")
 
     val versionPattern by parser.option(
@@ -92,6 +93,13 @@ class Configuration(args: Array<String>) {
         fullName = "pipeline-gitlab-dotenv",
     ).default("build.env")
 
+    val pipelineGithubVersionAnnotation by parser.option(
+        description = "github version annotation level",
+        type = ArgType.Choice(listOf("none", "notice", "warning", "error"), { it }),
+        fullName = "pipeline-github-version-annotation",
+    ).default("notice")
+
+
     val dirtyIgnore by parser.option(
         description = "ignore version change on dirty working tree",
         type = ArgType.Boolean,
@@ -135,7 +143,20 @@ class Configuration(args: Array<String>) {
     ).default(false)
 
     init {
-        parser.parse(args)
+        parser.parse(args + readRcFile())
+    }
+
+    private fun readRcFile() = run {
+        buildList {
+            File("./.gitversionrc").takeIf { it.exists() }?.readText()?.split("\n")?.forEach { line ->
+                val actual = line.trim().takeUnless { it.isBlank() || it.startsWith("#") } ?: return@forEach
+                val parts = actual.split("=", limit = 2)
+                add("--${parts.first()}")
+                parts.getOrNull(1)?.also { add(it) }
+            }
+        }.run {
+            toTypedArray()
+        }
     }
 
 

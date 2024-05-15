@@ -43,8 +43,18 @@ fun commit(message: String) {
     system("git commit -q --allow-empty -m \"$message\"")
 }
 
-fun process(vararg args: String, env: Map<String, String> = emptyMap()): String {
+fun process(vararg args: String, env: Map<String, String> = emptyMap()) = run {
     val out = StringBuilder()
-    Application(env = env::get, out = out::appendLine).execute(emptyArray<String>() + args)
-    return out.toString().trim()
+    val err = StringBuilder()
+    Application(env = env::get, out = out::appendLine, err = err::appendLine).execute(emptyArray<String>() + args)
+
+    ProcessResult(
+        out = out.toString().trim(),
+        err = err.toString().trim(),
+    )
 }
+
+data class ProcessResult(
+    val out: String,
+    val err: String,
+)

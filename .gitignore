@@ -1,4 +1,5 @@
 /build/*
 /.gradle/*
+/.kotlin/*
 /.idea/*
 /gitversion

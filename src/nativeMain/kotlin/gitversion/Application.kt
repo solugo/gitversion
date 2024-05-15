@@ -2,6 +2,7 @@ package gitversion
 
 class Application(
     private val out: (String) -> Unit,
+    private val err: (String) -> Unit,
     private val env: (String) -> String?,
 ) {
 
@@ -187,20 +188,27 @@ class Application(
                 )
 
                 var pipelineModified = false
+
                 Pipeline.modifiers.forEach { modifier ->
                     when (configuration.pipeline) {
                         "auto", modifier.name -> {
                             val modified = modifier.modify(
                                 Pipeline.Context(
                                     out = out,
+                                    err = err,
                                     env = env,
                                     environment = environment,
-                                    params = when (modifier.name) {
-                                        "gitlab" -> mapOf(
-                                            "dotenv" to configuration.pipelineGitlabDotenv
-                                        )
+                                    params = buildMap {
+                                        put("version", version.toString())
+                                        put("component", configuration.component)
 
-                                        else -> emptyMap()
+                                        if (modifier.name == "gitlab") {
+                                            put("dotenv", configuration.pipelineGitlabDotenv)
+                                        }
+
+                                        if (modifier.name == "github") {
+                                            put("version-annotation", configuration.pipelineGithubVersionAnnotation)
+                                        }
                                     }
                                 ),
                             )
@@ -220,16 +228,16 @@ class Application(
             if (stacktrace) {
                 ex.printStackTrace()
             } else {
-                out(ex.toString())
+                err(ex.toString())
             }
         }
 
     }
 
     private inline fun step(description: String, log: Boolean, block: (log: (message: String) -> Unit) -> Unit) {
-        if (log) out(description)
-        block { if (log) out("  $it") }
-        if (log) out("")
+        if (log) err(description)
+        block { if (log) err("  $it") }
+        if (log) err("")
     }
 
     data class VersionChange(val reason: Any, val modification: (Version.() -> Unit)?)

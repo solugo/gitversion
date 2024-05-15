@@ -2,7 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    kotlin("multiplatform") version "1.9.22"
+    kotlin("multiplatform") version "2.0.0-RC3"
 }
 
 group = "de.solugo.gitversion"
@@ -51,9 +51,9 @@ kotlin {
     sourceSets {
         val nativeMain by creating {
             dependencies {
-                implementation("com.squareup.okio:okio:3.7.0")
+                implementation("com.squareup.okio:okio:3.9.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.6")
-                implementation("me.archinamon:file-io:1.3.5")
+                implementation("me.archinamon:file-io:1.3.9")
             }
         }
         val nativeTest by creating {

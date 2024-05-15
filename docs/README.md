@@ -1,5 +1,6 @@
-![](https://img.shields.io/github/workflow/status/solugo/gitversion/release?style=for-the-badge)
-![](https://img.shields.io/github/v/release/solugo/gitversion?style=for-the-badge)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/solugo/gitversion/release.yml?style=for-the-badge)
+![GitHub Release](https://img.shields.io/github/v/release/solugo/gitversion?style=for-the-badge)
+![GitHub License](https://img.shields.io/github/license/solugo/gitversion?style=for-the-badge)
 
 ## Execute in pipeline
 
