@@ -226,7 +226,7 @@ class Application(
 
         } catch (ex: Exception) {
             if (stacktrace) {
-                ex.printStackTrace()
+                err(ex.stackTraceToString())
             } else {
                 err(ex.toString())
             }

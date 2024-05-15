@@ -7,11 +7,14 @@ object Pipeline {
     val modifiers = listOf(
         Modifier("azure") {
             env("BUILD_BUILDID") ?: return@Modifier false
+
             environment["VERSION"]?.also { err("##vso[build.updatebuildnumber]$it") }
             environment.entries.forEach { (key, value) -> err("##vso[task.setvariable variable=$key]$value") }
             true
         },
         Modifier("github") {
+            env("GITHUB_ACTION") ?: return@Modifier false
+
             var modified = false
 
             modified = modified or run {
@@ -36,6 +39,7 @@ object Pipeline {
         },
         Modifier("gitlab") {
             env("GITLAB_CI") ?: return@Modifier false
+
             val dotenv = params["dotenv"] ?: return@Modifier false
             writeLinesToFile(dotenv, environment.entries.map { "${it.key}=${it.value}" })
             true
