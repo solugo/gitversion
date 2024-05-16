@@ -1,10 +1,8 @@
 import assertk.assertThat
-import assertk.assertions.contains
-import assertk.assertions.isEqualTo
-import assertk.assertions.matches
+import assertk.assertions.*
 import gitversion.Application
-import me.archinamon.fileio.File
-import me.archinamon.fileio.readText
+import gitversion.readLines
+import okio.Path.Companion.toPath
 import platform.posix.system
 import kotlin.test.Test
 import kotlin.test.fail
@@ -284,8 +282,8 @@ class ApplicationTest {
 
         process("--pipeline", "github", env = env).apply {
             assertThat(err).contains("::notice title=GitVersion::Calculated version is 0.0.1")
-            assertThat(File("github.env").readText(), "VERSION=0.0.1\n")
-            assertThat(File("github.out").readText(), "VERSION=0.0.1\n")
+            assertThat("github.env".toPath().readLines()).isNotNull().containsOnly("VERSION=0.0.1")
+            assertThat("github.out".toPath().readLines()).isNotNull().containsOnly("VERSION=0.0.1")
         }
     }
 
@@ -294,7 +292,7 @@ class ApplicationTest {
         commit("commit 1")
 
         process("--pipeline", "gitlab", env = mapOf("GITLAB_CI" to "true")).apply {
-            assertThat(File("build.env").readText(), "VERSION=0.0.1\n")
+            assertThat("build.env".toPath().readLines()).isNotNull().containsOnly("VERSION=0.0.1")
         }
     }
 
@@ -307,7 +305,7 @@ class ApplicationTest {
         )
 
         process("--pipeline", "gitlab", "--pipeline-gitlab-dotenv", "my.env", env = env).apply {
-            assertThat(File("my.env").readText(), "VERSION=0.0.1\n")
+            assertThat("my.env".toPath().readLines()).isNotNull().containsOnly("VERSION=0.0.1")
         }
     }
 

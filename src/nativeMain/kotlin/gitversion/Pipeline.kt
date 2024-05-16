@@ -1,8 +1,6 @@
 package gitversion
 
-import me.archinamon.fileio.File
-import me.archinamon.fileio.appendText
-import me.archinamon.fileio.writeText
+import okio.Path.Companion.toPath
 
 object Pipeline {
     val modifiers = listOf(
@@ -20,13 +18,13 @@ object Pipeline {
 
             modified = modified or run {
                 val envFile = env("GITHUB_ENV") ?: return@run false
-                writeLinesToFile(envFile, environment.entries.map { "${it.key}=${it.value}" })
+                envFile.toPath().writeLines(environment.entries.map { "${it.key}=${it.value}" })
                 true
             }
 
             modified = modified or run {
                 val outputFile = env("GITHUB_OUTPUT") ?: return@run false
-                writeLinesToFile(outputFile, environment.entries.map { "${it.key}=${it.value}" })
+                outputFile.toPath().writeLines(environment.entries.map { "${it.key}=${it.value}" })
                 true
             }
             modified = modified or run {
@@ -42,21 +40,10 @@ object Pipeline {
             env("GITLAB_CI") ?: return@Modifier false
 
             val dotenv = params["dotenv"] ?: return@Modifier false
-            writeLinesToFile(dotenv, environment.entries.map { "${it.key}=${it.value}" })
+            dotenv.toPath().writeLines(environment.entries.map { "${it.key}=${it.value}" })
             true
         },
     )
-
-    private fun writeLinesToFile(file: String, lines: Collection<String>) {
-        val content = lines.joinToString(separator = "\n", postfix = "\n")
-
-        File(file).apply {
-            when {
-                exists() -> appendText(content)
-                else -> writeText(content)
-            }
-        }
-    }
 
 
     data class Context(

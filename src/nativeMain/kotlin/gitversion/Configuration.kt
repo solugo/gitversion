@@ -4,8 +4,7 @@ import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
 import kotlinx.cli.optional
-import me.archinamon.fileio.File
-import me.archinamon.fileio.readText
+import okio.Path.Companion.toPath
 
 class Configuration(args: Array<String>) {
     val parser = ArgParser("gitversion")
@@ -148,8 +147,8 @@ class Configuration(args: Array<String>) {
 
     private fun readRcFile() = run {
         buildList {
-            File("./.gitversionrc").takeIf { it.exists() }?.readText()?.split("\n")?.forEach { line ->
-                val actual = line.trim().takeUnless { it.isBlank() || it.startsWith("#") } ?: return@forEach
+            "./.gitversionrc".toPath().readLines()?.forEach {
+                val actual = it.trim().takeUnless { it.isBlank() || it.startsWith("#") } ?: return@forEach
                 val parts = actual.split("=", limit = 2)
                 add("--${parts.first()}")
                 parts.getOrNull(1)?.also { add(it) }

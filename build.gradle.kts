@@ -53,7 +53,6 @@ kotlin {
             dependencies {
                 implementation("com.squareup.okio:okio:3.9.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.6")
-                implementation("me.archinamon:file-io:1.3.9")
             }
         }
         val nativeTest by creating {
