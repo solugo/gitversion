@@ -12,7 +12,7 @@ object Pipeline {
             true
         },
         Modifier("github") {
-            env("GITHUB_ACTION") ?: return@Modifier false
+            env("GITHUB_ACTIONS") ?: return@Modifier false
 
             var modified = false
 

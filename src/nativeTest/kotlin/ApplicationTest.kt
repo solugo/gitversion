@@ -275,7 +275,7 @@ class ApplicationTest {
         commit("commit 1")
 
         val env = mapOf(
-            "GITHUB_ACTION" to "ACTION_ID",
+            "GITHUB_ACTIONS" to "true",
             "GITHUB_ENV" to "github.env",
             "GITHUB_OUTPUT" to "github.out",
         )
